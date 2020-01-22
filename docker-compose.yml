@@ -1,0 +1,53 @@
+version: '3.7'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    container_name: sample-laravel-redis-app
+    volumes:
+      - .:/sample-laravel-redis
+
+  web:
+    image: nginx:1.17.7-alpine
+    container_name: sample-laravel-redis-nginx
+    ports:
+      - "9000:80"
+    volumes:
+      - .:/sample-laravel-redis
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - app
+
+  node:
+    build:
+      context: .
+      dockerfile: ./docker/node/Dockerfile
+    container_name: sample-laravel-redis-node
+    volumes:
+      - ./public:/sample-laravel-redis/public
+      - ./package.json:/sample-laravel-redis/package.json
+      - ./yarn.lock:/sample-laravel-redis/yarn.lock
+    tty: true
+    stdin_open: true
+
+  redis:
+    image: redis:5.0.7-alpine
+    container_name: sample-laravel-redis-redis
+    ports:
+      - "6379:6379"
+
+  db:
+    build:
+      context: .
+      dockerfile: ./docker/mysql/Dockerfile
+    container_name: sample-laravel-redis-db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+
+volumes:
+  mysql-data:
